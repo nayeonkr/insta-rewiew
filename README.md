@@ -32,3 +32,13 @@ uv run alembic revision --autogenerate -m "create posts"
 ```
 uv run alembic upgrade head
 ```
+
+- alembic downgrade
+```
+uv run alembic downgrade -1
+```
+
+- alembic history
+```
+uv run alembic history
+```
