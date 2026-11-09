@@ -17,3 +17,8 @@ psql -U postgres # window
 
 CREATE DATABASE insta OWNER sd4;
 ```
+
+- alembic init
+```
+uv run alembic init alembic
+```
