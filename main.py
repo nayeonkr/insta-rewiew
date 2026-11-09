@@ -78,3 +78,24 @@ def post_detail(request: Request, post: Post = Depends(get_post_or_404)):
     name='detail.html',
     context={'post': post}
   )
+
+
+@app.get('/posts/{post_id}/edit')
+def post_edit(request: Request, post: Post = Depends(get_post_or_404)):
+  return templates.TemplateResponse(
+    request=request,
+    name='edit.html',
+    context={'post': post}
+  )
+
+
+@app.post('/posts/{post_id}/update')
+def post_update(
+  content: str = Form(), 
+  post: Post = Depends(get_post_or_404),
+  db: Session = Depends(get_db)
+):
+  post.content = content
+  db.commit()
+
+  return RedirectResponse('/posts', status_code=303)
