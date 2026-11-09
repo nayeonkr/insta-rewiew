@@ -1,8 +1,9 @@
 from fastapi import FastAPI, Request, Depends, Form, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
+from datetime import datetime
 
 DB_URL = 'postgresql+psycopg://sd4:sd4@localhost:5432/insta'
 engine = create_engine(DB_URL, echo=True)
@@ -16,6 +17,8 @@ class Post(Base):
 
   id: Mapped[int] = mapped_column(primary_key=True)
   content: Mapped[str]
+  created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+  # created_at: Mapped[datetime]
 
 app = FastAPI()
 templates = Jinja2Templates(directory='templates')
