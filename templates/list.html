@@ -8,6 +8,7 @@
   <h1>전체게시물</h1>
   {% for post in posts %}
     <p>{{ post.content }}</p>
+    <small>{{ post.created_at.strftime('%Y%m%d %H:%M') }}</small>
     <a href="/posts/{{post.id}}">자세히</a>
   {% endfor %}
 

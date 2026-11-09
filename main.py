@@ -46,7 +46,8 @@ def home():
 def post_list(request: Request, db: Session = Depends(get_db)):
   # with Session(engine) as db:
   
-  posts = db.scalars(select(Post)).all()
+  # posts = db.scalars(select(Post)).all()
+  posts = db.scalars(select(Post).order_by(Post.created_at.desc())).all()
   return templates.TemplateResponse(
     request=request,
     name='list.html',
