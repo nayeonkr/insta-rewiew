@@ -9,3 +9,11 @@ uv init insta --bare --python 3.14
 ```
 uv add "fastapi[standard]" sqlalchemy "psycopg[binary]" alembic
 ```
+
+- 데이터 베이스 생성
+```
+psql -d postgres # macOS
+psql -U postgres # window
+
+CREATE DATABASE insta OWNER sd4;
+```
