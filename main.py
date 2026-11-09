@@ -125,3 +125,16 @@ def post_delete(
   db.delete(post)
   db.commit()
   return RedirectResponse('/posts', status_code=303)
+
+
+@app.post('/posts/{post_id}/comments/create')
+def comment_create(
+  content: str = Form(),
+  post: Post = Depends(get_post_or_404),
+  db: Session = Depends(get_db)
+):
+  comment = Comment(content=content, post=post)
+  db.add(comment)
+  db.commit()
+
+  return RedirectResponse(f'/posts/{post.id}', status_code=303)

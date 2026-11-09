@@ -12,5 +12,12 @@
     <input type="submit" value="삭제하기">
   </form>
 
+  <hr>
+
+  <form action="/posts/{{ post.id }}/comments/create" method="post">
+    <input type="text" name="content">
+    <input type="submit" value="댓글등록">
+  </form>
+
 
 {% endblock %}
