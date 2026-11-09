@@ -23,6 +23,9 @@
     <p>
       {{ comment.content }}
       <small>{{ comment.created_at.strftime('%H:%M') }}</small>
+      <form action="/posts/{{ post.id }}/comments/{{ comment.id }}/delete" method="post">
+        <input type="submit" value="del">
+      </form>
     </p>
     
   {% else %}
