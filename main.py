@@ -1,5 +1,6 @@
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request, Depends, Form
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
 
@@ -38,3 +39,22 @@ def post_list(request: Request, db: Session = Depends(get_db)):
     name='list.html',
     context={'posts': posts}
   )
+
+
+@app.get('/posts/new')
+def post_new(request: Request):
+  return templates.TemplateResponse(
+    request=request,
+    name='new.html'
+  )
+
+
+@app.post('/posts/create')
+def post_create(content: str = Form(), db: Session = Depends(get_db)):
+  # db = Session(engine)
+  post = Post(content=content)
+  db.add(post)
+  db.commit()
+
+  # from fastapi.responses import RedirectResponse
+  return RedirectResponse('/posts', status_code=303)
