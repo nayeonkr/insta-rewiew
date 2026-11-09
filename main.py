@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
@@ -19,6 +19,9 @@ class Post(Base):
 app = FastAPI()
 templates = Jinja2Templates(directory='templates')
 
+def get_db():
+  with Session(engine) as db:
+    yield db
 
 @app.get('/')
 def home():
@@ -26,9 +29,10 @@ def home():
 
 
 @app.get('/posts')
-def post_list(request: Request):
-  with Session(engine) as db:
-    posts = db.scalars(select(Post)).all()
+def post_list(request: Request, db: Session = Depends(get_db)):
+  # with Session(engine) as db:
+  
+  posts = db.scalars(select(Post)).all()
   return templates.TemplateResponse(
     request=request,
     name='list.html',
