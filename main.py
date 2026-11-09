@@ -99,3 +99,13 @@ def post_update(
   db.commit()
 
   return RedirectResponse('/posts', status_code=303)
+
+
+@app.post('/posts/{post_id}/delete')
+def post_delete(
+  post: Post = Depends(get_post_or_404),
+  db: Session = Depends(get_db)
+):
+  db.delete(post)
+  db.commit()
+  return RedirectResponse('/posts', status_code=303)
