@@ -8,7 +8,7 @@
   <h1>전체게시물</h1>
   {% for post in posts %}
     <p>{{ post.content }}</p>
-    <a href="">자세히</a>
+    <a href="/posts/{{post.id}}">자세히</a>
   {% endfor %}
 
 {% endblock %}
