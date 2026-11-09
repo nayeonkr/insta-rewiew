@@ -91,11 +91,13 @@ def post_create(content: str = Form(), db: Session = Depends(get_db)):
 
 @app.get('/posts/{post_id}')
 def post_detail(request: Request, post: Post = Depends(get_post_or_404)):
-  
+  # comments = db.scalars(select(Comment).where().order_by(Comment.created_at.desc()))
   return templates.TemplateResponse(
     request=request,
     name='detail.html',
-    context={'post': post}
+    context={
+      'post': post
+    }
   )
 
 

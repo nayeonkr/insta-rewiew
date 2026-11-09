@@ -19,7 +19,7 @@
     <input type="submit" value="댓글등록">
   </form>
 
-  {% for comment in post.comments %}
+  {% for comment in post.comments | sort(attribute='created_at', reverse=True) %}
     <p>
       {{ comment.content }}
       <small>{{ comment.created_at.strftime('%H:%M') }}</small>
