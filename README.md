@@ -22,3 +22,8 @@ CREATE DATABASE insta OWNER sd4;
 ```
 uv run alembic init alembic
 ```
+
+- alembic revision
+```
+uv run alembic revision --autogenerate -m "create posts"
+```
