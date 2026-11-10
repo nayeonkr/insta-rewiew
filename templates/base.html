@@ -8,9 +8,18 @@
 <body>
   <nav>
     <a href="/posts">insta</a>
-    <a href="/posts/new">새글</a>
-    <a href="/signup">회원가입</a>
-    <a href="/login">로그인</a>
+    {% if user %}
+      <!-- 로그인을 한경우 -->
+       <a href="/posts/new">새글</a>
+       <span>{{ user.username }}</span>
+    {% else%}
+      <!-- 로그인이 안된경우 -->
+      <a href="/signup">회원가입</a>
+      <a href="/login">로그인</a>
+    {% endif %}
+
+    
+    
   </nav>
   <main>
     {% block content %} {% endblock %}

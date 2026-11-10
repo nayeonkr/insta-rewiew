@@ -74,13 +74,38 @@ def get_post_or_404(post_id: int, db: Session = Depends(get_db)):
   return post
 
 
+def get_current_user(request: Request, db: Session = Depends(get_db)):
+  session_id = request.cookies.get('session_id')
+
+  # 신분증 유무 판단
+  if session_id is None:
+    return None
+
+  user_session = db.get(UserSession, session_id)
+
+  # 신분증 유효한지 검사
+  if user_session is None:
+    return None
+
+  return user_session.user
+
+  
+
+  
+
+
+
 @app.get('/')
 def home():
   return {'hi': 'hello'}
 
 
 @app.get('/posts')
-def post_list(request: Request, db: Session = Depends(get_db)):
+def post_list(
+  request: Request, 
+  db: Session = Depends(get_db),
+  user: User | None = Depends(get_current_user)
+):
   # with Session(engine) as db:
   
   # posts = db.scalars(select(Post)).all()
@@ -88,15 +113,19 @@ def post_list(request: Request, db: Session = Depends(get_db)):
   return templates.TemplateResponse(
     request=request,
     name='list.html',
-    context={'posts': posts}
+    context={'posts': posts, 'user': user }
   )
 
 
 @app.get('/posts/new')
-def post_new(request: Request):
+def post_new(
+  request: Request,
+  user: User | None = Depends(get_current_user)
+):
   return templates.TemplateResponse(
     request=request,
-    name='new.html'
+    name='new.html',
+    context={'user': user}
   )
 
 
