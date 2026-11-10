@@ -42,3 +42,10 @@ uv run alembic downgrade -1
 ```
 uv run alembic history
 ```
+
+
+## 암호화
+- pwdlib 설치
+```
+uv add "pwdlib[argon2]"
+```
