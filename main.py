@@ -141,23 +141,35 @@ def post_create(content: str = Form(), db: Session = Depends(get_db)):
 
 
 @app.get('/posts/{post_id}')
-def post_detail(request: Request, post: Post = Depends(get_post_or_404)):
+def post_detail(
+  request: Request, 
+  post: Post = Depends(get_post_or_404),
+  user: User | None = Depends(get_current_user)
+):
   # comments = db.scalars(select(Comment).where().order_by(Comment.created_at.desc()))
   return templates.TemplateResponse(
     request=request,
     name='detail.html',
     context={
-      'post': post
+      'post': post,
+      'user': user
     }
   )
 
 
 @app.get('/posts/{post_id}/edit')
-def post_edit(request: Request, post: Post = Depends(get_post_or_404)):
+def post_edit(
+  request: Request, 
+  post: Post = Depends(get_post_or_404),
+  user: User | None = Depends(get_current_user)
+):
   return templates.TemplateResponse(
     request=request,
     name='edit.html',
-    context={'post': post}
+    context={
+      'post': post,
+      'user': user
+    }
   )
 
 
@@ -207,10 +219,16 @@ def comment_delete(post_id: int, comment_id: int, db: Session = Depends(get_db))
 
 # a태그를 통해서 들어오는 signup
 @app.get('/signup')
-def signup_form(request: Request):
+def signup_form(
+  request: Request,
+  user: User | None = Depends(get_current_user)
+):
   return templates.TemplateResponse(
     request=request,
-    name='signup.html'
+    name='signup.html',
+    context={
+      'user': user
+    }
   )
 
 
@@ -248,10 +266,14 @@ def signup(
 
 
 @app.get('/login')
-def login_form(request: Request):
+def login_form(
+  request: Request,
+  user: User | None = Depends(get_current_user)
+):
   return templates.TemplateResponse(
     request=request,
-    name='login.html'
+    name='login.html',
+    context={'user': user}
   )
 
 
@@ -285,3 +307,19 @@ def login(
   response = RedirectResponse('/posts', status_code=303)
   response.set_cookie('session_id', session_id, httponly=True, samesite='lax')
   return response
+
+
+@app.post('/logout')
+def logout(request: Request, db: Session = Depends(get_db)):
+  # 신분증 정보 가져오기 
+  session_id = request.cookies.get('session_id') 
+  user_session = db.get(UserSession, session_id)
+
+  if user_session:
+    db.delete(user_session)
+    db.commit()
+
+  response = RedirectResponse('/posts', status_code=303)
+  response.delete_cookie('session_id')
+  return response
+
