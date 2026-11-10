@@ -5,6 +5,7 @@ from sqlalchemy import create_engine, select, func, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session, relationship
 from datetime import datetime
 from pwdlib import PasswordHash
+import secrets
 
 DB_URL = 'postgresql+psycopg://sd4:sd4@localhost:5432/insta'
 engine = create_engine(DB_URL, echo=True)
@@ -226,5 +227,32 @@ def login_form(request: Request):
 
 
 @app.post('/login')
-def login():
-  pass
+def login(
+  request: Request,
+  username: str = Form(),
+  password: str = Form(),
+  db: Session = Depends(get_db)
+):
+  # 방금 입력한 아이디에 해당하는 유저 찾기
+  user = db.scalar(select(User).where(User.username == username))
+
+  # password_hash.verify(password, user.password_hash)
+  # 유저가 존재하지 않거나 / 그 유저의 비밀번호와 방금 입력한 비밀번호가 다른경우 => 에러입니다.
+  if (user is None) or not (password_hash.verify(password, user.password_hash)):
+    return templates.TemplateResponse(
+      request=request,
+      name='login.html',
+      context={'error': '아이디가 존재하지 않거나 비밀번호가 틀렸습니다.'}
+    )
+
+  # 비밀번호가 일치하면 => 신분증 발행
+  session_id = secrets.token_urlsafe(32)
+  # 발행한 신분증을 DB에 저장
+  user_session = UserSession(id=session_id, user=user)
+  db.add(user_session)
+  db.commit()
+
+  # 신분증을 유저한테 전달 (쿠키에 저장시키기)
+  response = RedirectResponse('/posts', status_code=303)
+  response.set_cookie('session_id', session_id, httponly=True, samesite='lax')
+  return response
