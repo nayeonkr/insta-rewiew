@@ -177,6 +177,13 @@ def post_edit(
   post: Post = Depends(get_post_or_404),
   user: User | None = Depends(get_current_user)
 ):
+  if user is None:
+    return RedirectResponse('/login', status_code=303)
+
+  # 게시물 작성자와 로그인한 사람 비교
+  if post.user_id != user.id:
+    raise HTTPException(status_code=403, detail='내 글만 수정 할 수 있습니다.')
+  
   return templates.TemplateResponse(
     request=request,
     name='edit.html',
@@ -191,8 +198,15 @@ def post_edit(
 def post_update(
   content: str = Form(), 
   post: Post = Depends(get_post_or_404),
-  db: Session = Depends(get_db)
+  db: Session = Depends(get_db),
+  user: User | None = Depends(get_current_user)
 ):
+  if user is None:
+      return RedirectResponse('/login', status_code=303)
+    # 게시물 작성자와 로그인한 사람 비교
+  if post.user_id != user.id:
+    raise HTTPException(status_code=403, detail='내 글만 수정 할 수 있습니다.')
+  
   post.content = content
   db.commit()
 
@@ -202,8 +216,15 @@ def post_update(
 @app.post('/posts/{post_id}/delete')
 def post_delete(
   post: Post = Depends(get_post_or_404),
-  db: Session = Depends(get_db)
+  db: Session = Depends(get_db),
+  user: User | None = Depends(get_current_user)
 ):
+  if user is None:
+      return RedirectResponse('/login', status_code=303)
+    # 게시물 작성자와 로그인한 사람 비교
+  if post.user_id != user.id:
+    raise HTTPException(status_code=403, detail='내 글만 수정 할 수 있습니다.')
+
   db.delete(post)
   db.commit()
   return RedirectResponse('/posts', status_code=303)
