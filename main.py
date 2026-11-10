@@ -25,6 +25,8 @@ class Post(Base):
     back_populates='post',
     cascade='all, delete-orphan'
   )
+  user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+  user: Mapped['User'] = relationship(back_populates='posts')
 
 class Comment(Base):
   __tablename__ = 'comments'
@@ -42,6 +44,7 @@ class User(Base):
   id: Mapped[int] = mapped_column(primary_key=True)
   username: Mapped[str] = mapped_column(unique=True)
   password_hash: Mapped[str]
+  posts: Mapped[list['Post']] = relationship(back_populates='user')
 
 
 class UserSession(Base):
