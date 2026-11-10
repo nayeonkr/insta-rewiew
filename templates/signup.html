@@ -5,6 +5,11 @@
 {% block content %}
 
   <h1>SIGNUP</h1>
+
+  {% if error %}
+    <p>{{ error }}</p>
+  {% endif %}
+
   <form action="/signup" method="post">
     <label for="username">아이디</label>
     <input type="text" id="username" name="username" required>

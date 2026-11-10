@@ -4,6 +4,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import create_engine, select, func, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session, relationship
 from datetime import datetime
+from pwdlib import PasswordHash
 
 DB_URL = 'postgresql+psycopg://sd4:sd4@localhost:5432/insta'
 engine = create_engine(DB_URL, echo=True)
@@ -44,6 +45,7 @@ class User(Base):
 
 app = FastAPI()
 templates = Jinja2Templates(directory='templates')
+password_hash = PasswordHash.recommended()
 
 def get_db():
   with Session(engine) as db:
@@ -173,5 +175,32 @@ def signup_form(request: Request):
 
 # form method='post' 방식으로 들어오는 signup
 @app.post('/signup')
-def signup():
-  pass
+def signup(
+  request: Request,
+  username: str = Form(), 
+  password: str = Form(),
+  db: Session = Depends(get_db)
+):
+  # 이미 있는 유저인지 검증
+  # SELECT * FROM users WHERE username='changhee'
+  exists = db.scalar(   select(User).where(User.username == username)  )
+  
+  # 이미 유저네임을 사용하는 경우 
+  if exists:
+    return templates.TemplateResponse(
+      request=request,
+      name='signup.html',
+      context={'error': '이미 있는 아이디입니다.'}
+    )
+
+  
+  # password를 암호화
+  # from pwdlib import PasswordHash
+  
+  hashed_pw = password_hash.hash(password)
+
+  user = User(username=username, password_hash=hashed_pw)
+  db.add(user)
+  db.commit()
+
+  return RedirectResponse('/login', status_code=303)
