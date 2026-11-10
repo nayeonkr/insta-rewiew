@@ -146,7 +146,7 @@ def post_create(
     return RedirectResponse('/login', status_code=303)
 
   # db = Session(engine)
-  post = Post(content=content)
+  post = Post(content=content, user=user)
   db.add(post)
   db.commit()
 

@@ -6,6 +6,7 @@
 {% block content %}
 
   <p>{{ post.content }}</p>
+  <small>{{ post.user.username }}</small>
 
   <a href="/posts/{{ post.id }}/edit">수정하기</a>
   <form action="/posts/{{ post.id }}/delete" method="post">
