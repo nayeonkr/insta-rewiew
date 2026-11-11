@@ -6,7 +6,15 @@
 
   <h1>{{ owner.username }}</h1>
   <p>게시물 {{ posts | length }}개</p>
+  <p>팔로우 {{follower_list | length }}</p>
+  <p>팔로잉 {{following_list | length}}</p>
 
+  <!-- 내가 내 자신을 팔로우 할 수 없도록 -->
+  {% if user.id != owner.id %}
+  <form action="/users/{{owner.username}}/follows" method="post">
+    <input type="submit" value="팔로우">
+  </form>
+  {% endif %}
   <hr>
 
   {% for post in posts %}
