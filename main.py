@@ -386,3 +386,29 @@ def logout(request: Request, db: Session = Depends(get_db)):
   response.delete_cookie('session_id')
   return response
 
+
+@app.post('/posts/{post_id}/likes')
+def post_like(
+  post: Post = Depends(get_post_or_404),
+  db: Session = Depends(get_db),
+  user: User | None = Depends(get_current_user)
+):
+  if user is None:
+    return RedirectResponse('/login', status_code=303)
+
+  # like가 이미 있는지?
+  result = db.get(Like, (user.id, post.id) )
+
+  if result:
+    # 좋아요가 이미 눌린경우
+    db.delete(result)
+  else:
+    # 아직 좋아요 안누른경우
+    like = Like(user_id=user.id, post_id=post.id)
+    db.add(like)
+  
+  db.commit()
+
+  return RedirectResponse('/posts', status_code=303)
+
+  
