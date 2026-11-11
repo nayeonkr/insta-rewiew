@@ -6,6 +6,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session, rela
 from datetime import datetime
 from pwdlib import PasswordHash
 import secrets
+from typing import Annotated
 
 DB_URL = 'postgresql+psycopg://sd4:sd4@localhost:5432/insta'
 engine = create_engine(DB_URL, echo=True)
@@ -78,7 +79,9 @@ def get_db():
   with Session(engine) as db:
     yield db
 
-def get_post_or_404(post_id: int, db: Session = Depends(get_db)):
+SessionDep = Annotated[Session, Depends(get_db)]
+
+def get_post_or_404(post_id: int, db: SessionDep):
   # SELECT * FROM posts WHERE post_id = 10;
   post = db.get(Post, post_id)
 
@@ -88,8 +91,10 @@ def get_post_or_404(post_id: int, db: Session = Depends(get_db)):
   
   return post
 
+PostDep = Annotated[Post, Depends(get_post_or_404)]
 
-def get_current_user(request: Request, db: Session = Depends(get_db)):
+
+def get_current_user(request: Request, db: SessionDep):
   session_id = request.cookies.get('session_id')
 
   # 신분증 유무 판단
@@ -103,6 +108,8 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
     return None
 
   return user_session.user
+
+CurrentUserDep = Annotated[User | None, Depends(get_current_user)]
 
   
 
@@ -118,8 +125,8 @@ def home():
 @app.get('/posts')
 def post_list(
   request: Request, 
-  db: Session = Depends(get_db),
-  user: User | None = Depends(get_current_user)
+  db: SessionDep,
+  user: CurrentUserDep
 ):
   # with Session(engine) as db:
   
@@ -140,7 +147,7 @@ def post_list(
 @app.get('/posts/new')
 def post_new(
   request: Request,
-  user: User | None = Depends(get_current_user)
+  user: CurrentUserDep
 ):
   # 로그인 하지 않은사람이라면
   if user is None:
@@ -155,9 +162,9 @@ def post_new(
 
 @app.post('/posts/create')
 def post_create(
-  content: str = Form(), 
-  db: Session = Depends(get_db),
-  user: User | None = Depends(get_current_user)
+  db: SessionDep,
+  user: CurrentUserDep,
+  content: str = Form()
 ):
   if user is None:
     return RedirectResponse('/login', status_code=303)
@@ -174,8 +181,8 @@ def post_create(
 @app.get('/posts/{post_id}')
 def post_detail(
   request: Request, 
-  post: Post = Depends(get_post_or_404),
-  user: User | None = Depends(get_current_user)
+  post: PostDep,
+  user: CurrentUserDep
 ):
   # comments = db.scalars(select(Comment).where().order_by(Comment.created_at.desc()))
   return templates.TemplateResponse(
@@ -191,8 +198,8 @@ def post_detail(
 @app.get('/posts/{post_id}/edit')
 def post_edit(
   request: Request, 
-  post: Post = Depends(get_post_or_404),
-  user: User | None = Depends(get_current_user)
+  post: PostDep,
+  user: CurrentUserDep
 ):
   if user is None:
     return RedirectResponse('/login', status_code=303)
@@ -213,10 +220,10 @@ def post_edit(
 
 @app.post('/posts/{post_id}/update')
 def post_update(
-  content: str = Form(), 
-  post: Post = Depends(get_post_or_404),
-  db: Session = Depends(get_db),
-  user: User | None = Depends(get_current_user)
+  post: PostDep,
+  db: SessionDep,
+  user: CurrentUserDep,
+  content: str = Form()
 ):
   if user is None:
       return RedirectResponse('/login', status_code=303)
@@ -232,9 +239,9 @@ def post_update(
 
 @app.post('/posts/{post_id}/delete')
 def post_delete(
-  post: Post = Depends(get_post_or_404),
-  db: Session = Depends(get_db),
-  user: User | None = Depends(get_current_user)
+  post: PostDep,
+  db: SessionDep,
+  user: CurrentUserDep
 ):
   if user is None:
       return RedirectResponse('/login', status_code=303)
@@ -249,10 +256,10 @@ def post_delete(
 
 @app.post('/posts/{post_id}/comments/create')
 def comment_create(
-  content: str = Form(),
-  post: Post = Depends(get_post_or_404),
-  db: Session = Depends(get_db),
-  user: User | None = Depends(get_current_user)
+  post: PostDep,
+  db: SessionDep,
+  user: CurrentUserDep,
+  content: str = Form()
 ):
   if user is None:
     return RedirectResponse('/login', status_code=303)
@@ -268,8 +275,8 @@ def comment_create(
 def comment_delete(
   post_id: int, 
   comment_id: int, 
-  db: Session = Depends(get_db),
-  user: User | None = Depends(get_current_user)
+  db: SessionDep,
+  user: CurrentUserDep
 ):
   # 로그인 안한사람 
   if user is None:
@@ -291,7 +298,7 @@ def comment_delete(
 @app.get('/signup')
 def signup_form(
   request: Request,
-  user: User | None = Depends(get_current_user)
+  user: CurrentUserDep
 ):
   return templates.TemplateResponse(
     request=request,
@@ -306,9 +313,9 @@ def signup_form(
 @app.post('/signup')
 def signup(
   request: Request,
+  db: SessionDep,
   username: str = Form(), 
-  password: str = Form(),
-  db: Session = Depends(get_db)
+  password: str = Form()
 ):
   # 이미 있는 유저인지 검증
   # SELECT * FROM users WHERE username='changhee'
@@ -338,7 +345,7 @@ def signup(
 @app.get('/login')
 def login_form(
   request: Request,
-  user: User | None = Depends(get_current_user)
+  user: CurrentUserDep
 ):
   return templates.TemplateResponse(
     request=request,
@@ -350,9 +357,9 @@ def login_form(
 @app.post('/login')
 def login(
   request: Request,
+  db: SessionDep,
   username: str = Form(),
-  password: str = Form(),
-  db: Session = Depends(get_db)
+  password: str = Form()
 ):
   # 방금 입력한 아이디에 해당하는 유저 찾기
   user = db.scalar(select(User).where(User.username == username))
@@ -380,7 +387,7 @@ def login(
 
 
 @app.post('/logout')
-def logout(request: Request, db: Session = Depends(get_db)):
+def logout(request: Request, db: SessionDep):
   # 신분증 정보 가져오기 
   session_id = request.cookies.get('session_id') 
   user_session = db.get(UserSession, session_id)
@@ -396,9 +403,9 @@ def logout(request: Request, db: Session = Depends(get_db)):
 
 @app.post('/posts/{post_id}/likes')
 def post_like(
-  post: Post = Depends(get_post_or_404),
-  db: Session = Depends(get_db),
-  user: User | None = Depends(get_current_user)
+  post: PostDep,
+  db: SessionDep,
+  user: CurrentUserDep
 ):
   if user is None:
     return RedirectResponse('/login', status_code=303)
