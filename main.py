@@ -34,8 +34,14 @@ class Comment(Base):
   id: Mapped[int] = mapped_column(primary_key=True)
   content: Mapped[str]
   created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+  #Post(1) : Comment(N)
   post_id: Mapped[int] = mapped_column(ForeignKey('posts.id'))
   post: Mapped['Post'] = relationship(back_populates='comments')
+
+  # User(1) : Comment(N)
+  user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+  user: Mapped['User'] = relationship()
 
 
 class User(Base):
@@ -45,6 +51,7 @@ class User(Base):
   username: Mapped[str] = mapped_column(unique=True)
   password_hash: Mapped[str]
   posts: Mapped[list['Post']] = relationship(back_populates='user')
+  # comments: Mapped[list['Comment']] = relationship(back_populates='user')
 
 
 class UserSession(Base):
@@ -234,9 +241,13 @@ def post_delete(
 def comment_create(
   content: str = Form(),
   post: Post = Depends(get_post_or_404),
-  db: Session = Depends(get_db)
+  db: Session = Depends(get_db),
+  user: User | None = Depends(get_current_user)
 ):
-  comment = Comment(content=content, post=post)
+  if user is None:
+    return RedirectResponse('/login', status_code=303)
+  
+  comment = Comment(content=content, post=post, user=user)
   db.add(comment)
   db.commit()
 
@@ -244,8 +255,22 @@ def comment_create(
 
 
 @app.post('/posts/{post_id}/comments/{comment_id}/delete')
-def comment_delete(post_id: int, comment_id: int, db: Session = Depends(get_db)):
+def comment_delete(
+  post_id: int, 
+  comment_id: int, 
+  db: Session = Depends(get_db),
+  user: User | None = Depends(get_current_user)
+):
+  # 로그인 안한사람 
+  if user is None:
+    return RedirectResponse('/login', status_code=303)
+
+  # 내가 쓴 댓글인지
   comment = db.get(Comment, comment_id)
+  if comment.user_id != user.id:
+    raise HTTPException(status_code=403, detail='내 댓글만 삭제 가능')
+  
+  
   db.delete(comment)
   db.commit()
 

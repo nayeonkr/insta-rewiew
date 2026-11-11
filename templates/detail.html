@@ -17,19 +17,25 @@
   {% endif %}
 
   <hr>
-
+  
+  {% if user %}
   <form action="/posts/{{ post.id }}/comments/create" method="post">
     <input type="text" name="content">
     <input type="submit" value="댓글등록">
   </form>
+  {% endif %}
 
   {% for comment in post.comments | sort(attribute='created_at', reverse=True) %}
     <p>
       {{ comment.content }}
+      <small>{{ comment.user.username }}</small>
       <small>{{ comment.created_at.strftime('%H:%M') }}</small>
+      
+      {% if user.id == comment.user_id %}
       <form action="/posts/{{ post.id }}/comments/{{ comment.id }}/delete" method="post">
         <input type="submit" value="del">
       </form>
+      {% endif %}
     </p>
     
   {% else %}
