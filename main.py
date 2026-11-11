@@ -43,7 +43,6 @@ class Comment(Base):
   user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
   user: Mapped['User'] = relationship()
 
-
 class User(Base):
   __tablename__ = 'users'
 
@@ -52,7 +51,6 @@ class User(Base):
   password_hash: Mapped[str]
   posts: Mapped[list['Post']] = relationship(back_populates='user')
   # comments: Mapped[list['Comment']] = relationship(back_populates='user')
-
 
 class UserSession(Base):
   __tablename__ = 'sessions'
@@ -63,6 +61,11 @@ class UserSession(Base):
   created_at: Mapped[datetime] = mapped_column(server_default=func.now())
   user: Mapped['User'] = relationship()
 
+class Like(Base):
+  __tablename__ = 'likes'
+
+  user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), primary_key=True)
+  post_id: Mapped[int] = mapped_column(ForeignKey('posts.id'), primary_key=True)
 
 
 app = FastAPI()
