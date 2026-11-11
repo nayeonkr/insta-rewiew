@@ -28,6 +28,8 @@ class Post(Base):
   user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
   user: Mapped['User'] = relationship(back_populates='posts')
 
+  likes: Mapped[list['Like']] = relationship(cascade='all, delete-orphan')
+
 class Comment(Base):
   __tablename__ = 'comments'
 
@@ -121,12 +123,17 @@ def post_list(
 ):
   # with Session(engine) as db:
   
+  liked_ids = []
+  if user:
+    liked_ids = db.scalars( select(Like.post_id).where(user.id == Like.user_id)  ).all()
+
+
   # posts = db.scalars(select(Post)).all()
   posts = db.scalars(select(Post).order_by(Post.created_at.desc())).all()
   return templates.TemplateResponse(
     request=request,
     name='list.html',
-    context={'posts': posts, 'user': user }
+    context={'posts': posts, 'user': user, 'liked_ids': liked_ids }
   )
 
 
